@@ -1,14 +1,32 @@
 package main
-
 import (
 	"net/http"
 	"log"
 	"path/filepath"
 	"os"
 	"io"
-
+	"flag"
+	
 	"github.com/mmcdole/gofeed"
 )
+
+func main() {
+	// Parse CLI args
+	downloadDirectory := flag.String("dir", "musicforprogramming", "Directory into which the tracks will be downloaded")
+	flag.Parse()
+	if *downloadDirectory == "" {
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
+	
+	createDir(*downloadDirectory)
+	getCover(*downloadDirectory)
+	tracks := getTracks()
+	for trackIndex, URL := range tracks.URL {
+		getTrack(*downloadDirectory, tracks.Title[trackIndex], URL)
+	}
+}
+
 type tracks struct {
 	Title []string
 	URL []string
@@ -38,7 +56,7 @@ func getCover(destDirectory string) {
 	if _, err := os.Stat(coverPath); os.IsNotExist(err) {
 		log.Printf("Album cover does not exist, downloading...")
 		
-		file, err :=os.Create(coverPath)
+		file, err := os.Create(coverPath)
 		defer file.Close()
 		if err != nil {
 			panic(err)
@@ -72,8 +90,25 @@ func createDir(destDirectory string) {
 
 // Download supplied track to supplied directory if it doesn't exist on disk
 func getTrack(destDirectory string, title string, URL string) {
-	
-}
-func main() {
-	createDir("test")
+	trackPath := filepath.Join(destDirectory, title + ".mp3")
+	if _, err := os.Stat(trackPath); os.IsNotExist(err) {
+		log.Printf("Track '" + title + "' does not exist on disk, Downloading... ")
+		file, err := os.Create(trackPath)
+		defer file.Close()
+		if err != nil {
+			panic(err)
+		}
+
+		resp, err := http.Get(URL)
+		defer resp.Body.Close()
+		if err != nil {
+			panic(err)
+		}
+		// See https://stackoverflow.com/questions/11692860/how-can-i-efficiently-download-a-large-file-using-go
+		// Stream HTTP response into file
+		n, err := io.Copy(file, resp.Body)
+		// We don't use n
+		_ = n
+		log.Printf("Track '" + title + "' downloaded!")
+	}	
 }
