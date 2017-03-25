@@ -1,8 +1,8 @@
 version: build-{build}.{branch}
 platform:
   - x64
-  - x86
-
+ #- x86
+ # appveyor currently sets GOPATH=amd64, even if building on x86, therefore temporarily disabled
 clone_folder: c:\gopath\src\github.com\casept\mfp-dl
 environment:  
   GOPATH: c:\gopath
