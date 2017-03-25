@@ -6,7 +6,7 @@ import (
 	"os"
 	"io"
 	"flag"
-	
+	id3 "github.com/mikkyang/id3-go"
 	"github.com/mmcdole/gofeed"
 )
 
@@ -88,6 +88,18 @@ func createDir(destDirectory string) {
 	}
 }
 
+// Add album metadata to the track supplied.
+// This is needed because the downloaded files don't contain this data.
+func setAlbum(file string) {
+	mp3File, err := id3.Open(file)
+	defer mp3File.Close()
+	if err != nil {
+		panic(err)
+	}
+	mp3File.SetAlbum("Music For Programming")
+	log.Printf("fdfdf")
+}
+
 // Download supplied track to supplied directory if it doesn't exist on disk
 func getTrack(destDirectory string, title string, URL string) {
 	trackPath := filepath.Join(destDirectory, title + ".mp3")
@@ -109,6 +121,7 @@ func getTrack(destDirectory string, title string, URL string) {
 		n, err := io.Copy(file, resp.Body)
 		// We don't use n
 		_ = n
+		setAlbum(trackPath)
 		log.Printf("Track '" + title + "' downloaded!")
 	}	
 }
