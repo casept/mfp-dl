@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	id3 "github.com/mikkyang/id3-go"
+	id3 "github.com/casept/id3-go"
 	"github.com/mmcdole/gofeed"
 	"io"
 	"log"
@@ -111,14 +111,13 @@ func setAlbum(file string) {
 		panic(err)
 	}
 	mp3File.SetAlbum("Music For Programming")
-	log.Printf("fdfdf")
 }
 
 // Download supplied track to supplied directory if it doesn't exist on disk
 func getTrack(destDirectory string, title string, URL string) {
 	trackPath := filepath.Join(destDirectory, title+".mp3")
 	if _, err := os.Stat(trackPath); os.IsNotExist(err) {
-		log.Printf("Track '" + title + "' does not exist on disk, Downloading... ")
+		log.Printf("Track '" + title + "' does not exist on disk, downloading... ")
 		file, err := os.Create(trackPath)
 		defer file.Close()
 		if err != nil {

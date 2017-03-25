@@ -1,5 +1,5 @@
 {
-    "memo": "5190068a5c23e4567ad12bc02d9bcead6094ad1112a3078764548a702f5b8927",
+    "memo": "6b7f6b9df2c6623583f471814dd72e4dbbad37853422808b2894d733f02934e3",
     "projects": [
         {
             "name": "github.com/PuerkitoBio/goquery",
@@ -18,17 +18,9 @@
             ]
         },
         {
-            "name": "github.com/djimenez/iconv-go",
+            "name": "github.com/casept/id3-go",
             "branch": "master",
-            "revision": "8960e66bd3dacbc8773962b40eb82fc18c63c127",
-            "packages": [
-                "."
-            ]
-        },
-        {
-            "name": "github.com/mikkyang/id3-go",
-            "branch": "master",
-            "revision": "0168d962f1d773af3e29867138593203b653782e",
+            "revision": "2e21798b4999ccd0cd10fdb37e427712998d6fc2",
             "packages": [
                 ".",
                 "encodedbytes",
