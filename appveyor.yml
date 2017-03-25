@@ -15,6 +15,9 @@ install:
   - go env
 build_script:
   - go build -o buildOutput/mfp-dl.exe -i .
+
+test_script:
+  - go test -v
 artifacts:
   path: buildOutput/mfp-dl.exe
   name: binary
