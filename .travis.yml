@@ -6,3 +6,8 @@ go:
   - 1.6.x
   - 1.7.x
   - 1.8.x
+
+# Travis tries to run broken third-party tests during install, skip that
+install:
+  - true
+
