@@ -1,0 +1,7 @@
+{
+    "dependencies": {
+        "github.com/mmcdole/gofeed": {
+            "branch": "master"
+        }
+    }
+}
