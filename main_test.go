@@ -1,10 +1,10 @@
 package main
 
 import (
-	"testing"
+	"net/http"
 	"os"
 	"path/filepath"
-	"net/http"
+	"testing"
 )
 
 func TestGetCover(t *testing.T) {

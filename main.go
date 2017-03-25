@@ -71,19 +71,22 @@ func getCover(destDirectory string) {
 		log.Printf("Album cover does not exist, downloading...")
 
 		file, err := os.Create(coverPath)
-		defer file.Close()
 		if err != nil {
 			panic(err)
 		}
+		defer file.Close()
 
 		resp, err := http.Get("https://musicforprogramming.net/img/folder.jpg")
-		defer resp.Body.Close()
 		if err != nil {
 			panic(err)
 		}
+		defer resp.Body.Close()
 		// See https://stackoverflow.com/questions/11692860/how-can-i-efficiently-download-a-large-file-using-go
 		// Stream HTTP response into file
 		n, err := io.Copy(file, resp.Body)
+		if err != nil {
+			panic(err)
+		}
 		// We don't use n
 		_ = n
 		log.Printf("Album cover downloaded!")
@@ -106,10 +109,10 @@ func createDir(destDirectory string) {
 // This is needed because the downloaded files don't contain this data.
 func setAlbum(file string) {
 	mp3File, err := id3.Open(file)
-	defer mp3File.Close()
 	if err != nil {
 		panic(err)
 	}
+	defer mp3File.Close()
 	mp3File.SetAlbum("Music For Programming")
 }
 
@@ -119,19 +122,22 @@ func getTrack(destDirectory string, title string, URL string) {
 	if _, err := os.Stat(trackPath); os.IsNotExist(err) {
 		log.Printf("Track '" + title + "' does not exist on disk, downloading... ")
 		file, err := os.Create(trackPath)
-		defer file.Close()
 		if err != nil {
 			panic(err)
 		}
+		defer file.Close()
 
 		resp, err := http.Get(URL)
-		defer resp.Body.Close()
 		if err != nil {
 			panic(err)
 		}
+		defer resp.Body.Close()
 		// See https://stackoverflow.com/questions/11692860/how-can-i-efficiently-download-a-large-file-using-go
 		// Stream HTTP response into file
 		n, err := io.Copy(file, resp.Body)
+		if err != nil {
+			panic(err)
+		}
 		// We don't use n
 		_ = n
 		setAlbum(trackPath)
