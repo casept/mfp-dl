@@ -24,3 +24,7 @@ Example:
 mfp-dl -dir ~/Music/musicforprogramming
 ```
 
+### Development    
+This package uses the (not yet) official 'dep' tool. You can install it by running 'go get -u github.com/golang/dep'.
+Make sure to vendor any dependencies outside the standart library before you submit your pull request.
+
