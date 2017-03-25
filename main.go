@@ -1,13 +1,14 @@
 package main
+
 import (
-	"net/http"
-	"log"
-	"path/filepath"
-	"os"
-	"io"
 	"flag"
 	id3 "github.com/mikkyang/id3-go"
 	"github.com/mmcdole/gofeed"
+	"io"
+	"log"
+	"net/http"
+	"os"
+	"path/filepath"
 )
 
 func main() {
@@ -18,7 +19,7 @@ func main() {
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
-	
+
 	createDir(*downloadDirectory)
 	getCover(*downloadDirectory)
 	tracks := getTracks()
@@ -29,7 +30,16 @@ func main() {
 
 type tracks struct {
 	Title []string
-	URL []string
+	URL   []string
+}
+
+// Borrowed from https://stackoverflow.com/questions/34816489/reverse-slice-of-strings
+func reverseStringSlice(ss []string) []string {
+	last := len(ss) - 1
+	for i := 0; i < len(ss)/2; i++ {
+		ss[i], ss[last-i] = ss[last-i], ss[i]
+	}
+	return ss
 }
 
 // Get titles and URLs to tracks from RSS feed
@@ -47,21 +57,25 @@ func getTracks() (tracks tracks) {
 			tracks.URL = append(tracks.URL, enclosure.URL)
 		}
 	}
+	// Invert both slices
+	// Having index 0 be the first track eases testing and makes more sense to the user
+	tracks.Title = reverseStringSlice(tracks.Title)
+	tracks.URL = reverseStringSlice(tracks.URL)
 	return tracks
 }
 
 // Download folder.jpg (album cover image) if it doesn't exist
 func getCover(destDirectory string) {
-	coverPath := filepath.Join(destDirectory, "folder.jpg") 
+	coverPath := filepath.Join(destDirectory, "folder.jpg")
 	if _, err := os.Stat(coverPath); os.IsNotExist(err) {
 		log.Printf("Album cover does not exist, downloading...")
-		
+
 		file, err := os.Create(coverPath)
 		defer file.Close()
 		if err != nil {
 			panic(err)
 		}
-		
+
 		resp, err := http.Get("https://musicforprogramming.net/img/folder.jpg")
 		defer resp.Body.Close()
 		if err != nil {
@@ -102,7 +116,7 @@ func setAlbum(file string) {
 
 // Download supplied track to supplied directory if it doesn't exist on disk
 func getTrack(destDirectory string, title string, URL string) {
-	trackPath := filepath.Join(destDirectory, title + ".mp3")
+	trackPath := filepath.Join(destDirectory, title+".mp3")
 	if _, err := os.Stat(trackPath); os.IsNotExist(err) {
 		log.Printf("Track '" + title + "' does not exist on disk, Downloading... ")
 		file, err := os.Create(trackPath)
@@ -123,5 +137,5 @@ func getTrack(destDirectory string, title string, URL string) {
 		_ = n
 		setAlbum(trackPath)
 		log.Printf("Track '" + title + "' downloaded!")
-	}	
+	}
 }
