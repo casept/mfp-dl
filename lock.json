@@ -1,5 +1,5 @@
 {
-    "memo": "6b7f6b9df2c6623583f471814dd72e4dbbad37853422808b2894d733f02934e3",
+    "memo": "98fbbeac8483dc357f11a1e4011afef43bd80bb56cf9129404acad17e26f4827",
     "projects": [
         {
             "name": "github.com/PuerkitoBio/goquery",
@@ -26,6 +26,14 @@
                 "encodedbytes",
                 "v1",
                 "v2"
+            ]
+        },
+        {
+            "name": "github.com/mattn/go-runewidth",
+            "version": "v0.0.2",
+            "revision": "9e777a8366cce605130a531d2cd6363d07ad7317",
+            "packages": [
+                "."
             ]
         },
         {
@@ -80,6 +88,14 @@
                 "runes",
                 "transform",
                 "unicode/cldr"
+            ]
+        },
+        {
+            "name": "gopkg.in/cheggaaa/pb.v1",
+            "version": "v1.0.11",
+            "revision": "0817e3a1f8de9e3c78b159699b3c07d53e24a963",
+            "packages": [
+                "."
             ]
         }
     ]

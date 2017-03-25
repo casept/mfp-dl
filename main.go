@@ -4,11 +4,13 @@ import (
 	"flag"
 	id3 "github.com/casept/id3-go"
 	"github.com/mmcdole/gofeed"
+	"gopkg.in/cheggaaa/pb.v1"
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 )
 
 func main() {
@@ -132,12 +134,21 @@ func getTrack(destDirectory string, title string, URL string) {
 			panic(err)
 		}
 		defer resp.Body.Close()
+		// Prepare to show a progress bar
+		// Start by getting the size of the file we'll be downloading
+		size, _ := strconv.Atoi(resp.Header.Get("Content-Length"))
+		// Set up our progress bar
+		// See https://github.com/cheggaaa/pb/#progress-bar-for-io-operations
+		bar := pb.New(size).SetUnits(pb.U_BYTES)
+		bar.Start()
+		writer := io.MultiWriter(file, bar)
 		// See https://stackoverflow.com/questions/11692860/how-can-i-efficiently-download-a-large-file-using-go
 		// Stream HTTP response into file
-		n, err := io.Copy(file, resp.Body)
+		n, err := io.Copy(writer, resp.Body)
 		if err != nil {
 			panic(err)
 		}
+		bar.Finish()
 		// We don't use n
 		_ = n
 		setAlbum(trackPath)
