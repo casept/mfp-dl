@@ -10,4 +10,6 @@ go:
 # Travis tries to run broken third-party tests during install, skip that
 install:
   - true
-
+script:
+  - go test -v
+  - go build
