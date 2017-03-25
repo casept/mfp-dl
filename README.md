@@ -1,4 +1,6 @@
 # mfp-dl
+[Windows build](https://ci.appveyor.com/api/projects/status/github/casept/mfp-dl?branch=master&svg=true)
+
 ## What is this?   
 This is a simple utility intended for downloading all tracks off of [musicforprogramming.net](https://musicforprogramming.net/).
 Essentially, it just parses the site's RSS feed
