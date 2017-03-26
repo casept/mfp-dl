@@ -2,6 +2,7 @@
 [![Windows build status:](https://ci.appveyor.com/api/projects/status/xywauc7tmvc5lduy/branch/master?svg=true)](https://ci.appveyor.com/project/casept/mfp-dl/branch/master)
 [![Linux/OSX build status:](https://travis-ci.org/casept/mfp-dl.svg?branch=master)](https://travis-ci.org/casept/mfp-dl)
 [![Go Report Card](https://goreportcard.com/badge/github.com/casept/mfp-dl)](https://goreportcard.com/report/github.com/casept/mfp-dl)
+[![Coverage Status](https://coveralls.io/repos/github/casept/mfp-dl/badge.svg?branch=master)](https://coveralls.io/github/casept/mfp-dl?branch=master)
 ## What is this?   
 This is a simple utility intended for downloading all tracks off of [musicforprogramming.net](https://musicforprogramming.net/).
 Essentially, it just parses the site's RSS feed
