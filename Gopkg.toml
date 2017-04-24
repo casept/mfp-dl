@@ -1,0 +1,12 @@
+
+[[dependencies]]
+  branch = "master"
+  name = "github.com/casept/id3-go"
+
+[[dependencies]]
+  branch = "master"
+  name = "github.com/mmcdole/gofeed"
+
+[[dependencies]]
+  branch = "master"
+  name = "gopkg.in/cheggaaa/pb.v1"

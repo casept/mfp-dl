@@ -1,0 +1,55 @@
+memo = ""
+
+[[projects]]
+  branch = "master"
+  name = "github.com/PuerkitoBio/goquery"
+  packages = ["."]
+  revision = "ed7d758e9a34ba1f55e8084e0d731448b46921a8"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/andybalholm/cascadia"
+  packages = ["."]
+  revision = "349dd0209470eabd9514242c688c403c0926d266"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/casept/id3-go"
+  packages = ["."]
+  revision = "2e21798b4999ccd0cd10fdb37e427712998d6fc2"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/mattn/go-runewidth"
+  packages = ["."]
+  revision = "14207d285c6c197daabb5c9793d63e7af9ab2d50"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/mmcdole/gofeed"
+  packages = ["."]
+  revision = "042c0a9121581210fc8ef106d8ad1b0bdf931ae2"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/mmcdole/goxpp"
+  packages = ["."]
+  revision = "e38884aa48c1952a416ba35f3c276e4f02f9b40e"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/net"
+  packages = ["html","html/charset"]
+  revision = "d212a1ef2de2f5d441c327b8f26cf3ea3ea9f265"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/text"
+  packages = ["encoding","encoding/charmap","encoding/unicode","transform","encoding/htmlindex"]
+  revision = "a9a820217f98f7c8a207ec1e45a874e1fe12c478"
+
+[[projects]]
+  branch = "master"
+  name = "gopkg.in/cheggaaa/pb.v1"
+  packages = ["."]
+  revision = "b6229822fa186496fcbf34111237e7a9693c6971"
