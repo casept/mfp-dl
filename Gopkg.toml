@@ -1,7 +1,7 @@
 
 [[dependencies]]
   branch = "master"
-  name = "github.com/casept/id3-go"
+  name = "github.com/bogem/id3v2"
 
 [[dependencies]]
   branch = "master"

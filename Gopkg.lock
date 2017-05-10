@@ -1,4 +1,4 @@
-memo = ""
+memo = "938afbf305384cdfd75ba18f7766bb804c48075178c7c9393a532655d277c275"
 
 [[projects]]
   branch = "master"
@@ -14,9 +14,9 @@ memo = ""
 
 [[projects]]
   branch = "master"
-  name = "github.com/casept/id3-go"
-  packages = ["."]
-  revision = "2e21798b4999ccd0cd10fdb37e427712998d6fc2"
+  name = "github.com/bogem/id3v2"
+  packages = [".","bbpool","bwpool","lrpool","rdpool","util"]
+  revision = "2133fdc154200ab6b8f7f85d87c17e19d9e86189"
 
 [[projects]]
   branch = "master"
@@ -27,7 +27,7 @@ memo = ""
 [[projects]]
   branch = "master"
   name = "github.com/mmcdole/gofeed"
-  packages = ["."]
+  packages = [".","atom","extensions","internal/shared","rss"]
   revision = "042c0a9121581210fc8ef106d8ad1b0bdf931ae2"
 
 [[projects]]
@@ -39,13 +39,13 @@ memo = ""
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
-  packages = ["html","html/charset"]
+  packages = ["html","html/atom","html/charset"]
   revision = "feeb485667d1fdabe727840fe00adc22431bc86e"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/text"
-  packages = ["encoding","encoding/charmap","encoding/unicode","transform","encoding/htmlindex"]
+  packages = ["encoding","encoding/charmap","encoding/htmlindex","encoding/internal","encoding/internal/identifier","encoding/japanese","encoding/korean","encoding/simplifiedchinese","encoding/traditionalchinese","encoding/unicode","internal/gen","internal/tag","internal/utf8internal","language","runes","transform","unicode/cldr"]
   revision = "470f45bf29f4147d6fbd7dfd0a02a848e49f5bf4"
 
 [[projects]]

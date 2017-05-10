@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	id3 "github.com/casept/id3-go"
+	"github.com/bogem/id3v2"
 	"github.com/mmcdole/gofeed"
 	"gopkg.in/cheggaaa/pb.v1"
 	"io"
@@ -110,7 +110,7 @@ func createDir(destDirectory string) {
 // Add album metadata to the track supplied.
 // This is needed because the downloaded files don't contain this data.
 func setAlbum(file string) {
-	mp3File, err := id3.Open(file)
+	mp3File, err := id3v2.Open(file, id3v2.Options{Parse: true})
 	if err != nil {
 		panic(err)
 	}

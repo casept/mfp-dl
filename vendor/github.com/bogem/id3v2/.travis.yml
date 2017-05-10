@@ -1,0 +1,18 @@
+language: go
+
+go:
+  - 1.7.5
+  - 1.8.1
+
+env:
+  matrix:
+    - GOOS=linux
+    - GOOS=darwin
+    - GOOS=freebsd
+    - GOOS=windows
+
+script:
+  - go build && go test -v ./...
+
+notifications:
+  email: false
