@@ -40,16 +40,16 @@ memo = ""
   branch = "master"
   name = "golang.org/x/net"
   packages = ["html","html/charset"]
-  revision = "d212a1ef2de2f5d441c327b8f26cf3ea3ea9f265"
+  revision = "feeb485667d1fdabe727840fe00adc22431bc86e"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/text"
   packages = ["encoding","encoding/charmap","encoding/unicode","transform","encoding/htmlindex"]
-  revision = "a9a820217f98f7c8a207ec1e45a874e1fe12c478"
+  revision = "470f45bf29f4147d6fbd7dfd0a02a848e49f5bf4"
 
 [[projects]]
   branch = "master"
   name = "gopkg.in/cheggaaa/pb.v1"
   packages = ["."]
-  revision = "b6229822fa186496fcbf34111237e7a9693c6971"
+  revision = "f6ccf2184de4dd34495277e38dc19b6e7fbe0ea2"
