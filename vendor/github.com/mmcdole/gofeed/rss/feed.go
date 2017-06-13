@@ -1,7 +1,6 @@
 package rss
 
 import (
-	"encoding/json"
 	"time"
 
 	"github.com/mmcdole/gofeed/extensions"
@@ -35,11 +34,6 @@ type Feed struct {
 	Extensions          ext.Extensions           `json:"extensions,omitempty"`
 	Items               []*Item                  `json:"items"`
 	Version             string                   `json:"version"`
-}
-
-func (f Feed) String() string {
-	json, _ := json.MarshalIndent(f, "", "    ")
-	return string(json)
 }
 
 // Item is an RSS Item

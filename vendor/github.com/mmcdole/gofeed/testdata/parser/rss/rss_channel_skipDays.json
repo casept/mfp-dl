@@ -1,7 +1,7 @@
 {
     "skipDays": [
-        "Thursday",
-        "Friday"
+        "Saturday",
+        "Sunday"
     ],
     "items": [],
     "version": "2.0"

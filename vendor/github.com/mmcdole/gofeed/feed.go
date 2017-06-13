@@ -1,7 +1,6 @@
 package gofeed
 
 import (
-	"encoding/json"
 	"time"
 
 	"github.com/mmcdole/gofeed/extensions"
@@ -30,11 +29,6 @@ type Feed struct {
 	Items           []*Item           `json:"items"`
 	FeedType        string            `json:"feedType"`
 	FeedVersion     string            `json:"feedVersion"`
-}
-
-func (f Feed) String() string {
-	json, _ := json.MarshalIndent(f, "", "    ")
-	return string(json)
 }
 
 // Item is the universal Item type that atom.Entry

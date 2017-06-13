@@ -1,8 +1,8 @@
 <!--
-Description: rss title - escaped markup
+Description: channel title - escaped markup
 -->
 <rss version="2.0">
-  <channel>
-    <title>&lt;p&gt;Feed Title&lt;/p&gt;</title>
-  </channel>
+<channel>
+<title>&lt;p&gt;Example feed&lt;/p&gt;</title>
+</channel>
 </rss>

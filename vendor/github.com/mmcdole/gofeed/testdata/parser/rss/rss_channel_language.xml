@@ -1,8 +1,8 @@
 <!--
-Description: rss channel language 
+Description: channel language
 -->
 <rss version="2.0">
-  <channel>
-    <language>en-us</langauge>
-  </channel>
+<channel>
+<language>en-us</language>
+</channel>
 </rss>

@@ -53,7 +53,7 @@ func NewITunesFeedExtension(extensions map[string][]Extension) *ITunesFeedExtens
 	feed.Keywords = parseTextExtension("keywords", extensions)
 	feed.Subtitle = parseTextExtension("subtitle", extensions)
 	feed.Summary = parseTextExtension("summary", extensions)
-	feed.Image = parseImage(extensions)
+	feed.Image = parseTextExtension("image", extensions)
 	feed.Complete = parseTextExtension("complete", extensions)
 	feed.NewFeedURL = parseTextExtension("new-feed-url", extensions)
 	feed.Categories = parseCategories(extensions)
@@ -71,24 +71,10 @@ func NewITunesItemExtension(extensions map[string][]Extension) *ITunesItemExtens
 	entry.Explicit = parseTextExtension("explicit", extensions)
 	entry.Subtitle = parseTextExtension("subtitle", extensions)
 	entry.Summary = parseTextExtension("summary", extensions)
-	entry.Image = parseImage(extensions)
+	entry.Image = parseTextExtension("image", extensions)
 	entry.IsClosedCaptioned = parseTextExtension("isClosedCaptioned", extensions)
 	entry.Order = parseTextExtension("order", extensions)
 	return entry
-}
-
-func parseImage(extensions map[string][]Extension) (image string) {
-	if extensions == nil {
-		return
-	}
-
-	matches, ok := extensions["image"]
-	if !ok || len(matches) == 0 {
-		return
-	}
-
-	image = matches[0].Attrs["href"]
-	return
 }
 
 func parseOwner(extensions map[string][]Extension) (owner *ITunesOwner) {

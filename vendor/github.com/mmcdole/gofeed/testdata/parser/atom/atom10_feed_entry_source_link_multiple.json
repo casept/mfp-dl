@@ -4,12 +4,12 @@
             "source": {
                 "links": [
                     {
-                        "href": "http://example.org/1",
+                        "href": "http://www.example.com/",
                         "rel": "alternate",
                         "type": "application/xhtml+xml"
                     },
                     {
-                        "href": "http://example.org/2",
+                        "href": "http://www.example.com/post",
                         "rel": "service.post",
                         "type": "application/atom+xml"
                     }

@@ -1,7 +1,7 @@
 {
     "categories": [
-        "Feed Category 1",
-        "Feed Category 2"
+        "Example category 1",
+        "Example category 2"
     ],
     "items": [],
     "feedType": "rss",

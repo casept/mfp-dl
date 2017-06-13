@@ -1,8 +1,9 @@
 <!--
-Description: feed entry content
+Description: entry content content value
+Expect:      not bozo and entries[0]['content'][0]['value'] == 'Example Atom'
 -->
 <feed version="0.3" xmlns="http://purl.org/atom/ns#">
-  <entry>
-    <content>Entry Content</content>
-  </entry>
+<entry>
+  <content>Example Atom</content>
+</entry>
 </feed>

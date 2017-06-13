@@ -3,7 +3,7 @@
         {
             "links": [
                 {
-                    "rel": "self"
+                    "rel": "alternate"
                 }
             ]
         }

@@ -3,7 +3,7 @@
         {
             "content": {
                 "type": "application/octet-stream",
-                "value": "Entry Content"
+                "value": "Example <b>Atom</b>"
             }
         }
     ],

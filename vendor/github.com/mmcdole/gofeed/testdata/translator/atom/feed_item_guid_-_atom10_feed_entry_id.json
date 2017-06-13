@@ -1,7 +1,7 @@
 {
     "items": [
         {
-            "guid": "http://example.org"
+            "guid": "http://example.com/"
         }
     ],
     "feedType": "atom",

@@ -2,7 +2,7 @@
 Description: channel copyright
 -->
 <rss version="2.0">
-  <channel>
-    <copyright>Feed Copyright</copyright>
-  </channel>
+<channel>
+<copyright>Example copyright</copyright>
+</channel>
 </rss>

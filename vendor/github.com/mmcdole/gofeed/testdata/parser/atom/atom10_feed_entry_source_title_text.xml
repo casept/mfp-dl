@@ -1,10 +1,11 @@
 <!--
-Description: entry source title - text
+Description: entry source title with explicit type='text'
+Expect:      not bozo and entries[0]['source']['title'] == 'Example Atom'
 -->
 <feed xmlns="http://www.w3.org/2005/Atom">
-  <entry>
-    <source>
-      <title type="text">Source Title</subtitle>
-    </source>
-  </entry>
+<entry>
+<source>
+  <title type="text">Example Atom</title>
+</source>
+</entry>
 </feed>

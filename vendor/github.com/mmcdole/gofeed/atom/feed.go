@@ -1,7 +1,6 @@
 package atom
 
 import (
-	"encoding/json"
 	"time"
 
 	"github.com/mmcdole/gofeed/extensions"
@@ -26,11 +25,6 @@ type Feed struct {
 	Entries       []*Entry       `json:"entries"`
 	Extensions    ext.Extensions `json:"extensions,omitempty"`
 	Version       string         `json:"version"`
-}
-
-func (f Feed) String() string {
-	json, _ := json.MarshalIndent(f, "", "    ")
-	return string(json)
 }
 
 // Entry is an Atom Entry
@@ -110,5 +104,5 @@ type Source struct {
 	Contributors  []*Person      `json:"contributors,omitempty"`
 	Authors       []*Person      `json:"authors,omitempty"`
 	Categories    []*Category    `json:"categories,omitempty"`
-	Extensions    ext.Extensions `json:"extensions,omitempty"`
+	Extensions    ext.Extensions `json:"extensions"`
 }

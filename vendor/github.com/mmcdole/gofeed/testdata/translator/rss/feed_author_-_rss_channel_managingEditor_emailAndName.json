@@ -1,7 +1,7 @@
 {
     "author": {
-        "name": "Author Name",
-        "email": "email@example.org"
+        "name": "Example Name",
+        "email": "example@site.com"
     },
     "items": [],
     "feedType": "rss",

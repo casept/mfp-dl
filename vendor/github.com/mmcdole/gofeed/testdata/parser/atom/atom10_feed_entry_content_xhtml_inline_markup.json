@@ -3,7 +3,7 @@
         {
             "content": {
                 "type": "xhtml",
-                "value": "<p>Entry Content</p>"
+                "value": "Example <b>Atom</b>"
             }
         }
     ],

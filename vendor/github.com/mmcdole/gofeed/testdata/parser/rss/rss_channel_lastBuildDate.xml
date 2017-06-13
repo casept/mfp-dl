@@ -1,8 +1,8 @@
 <!--
-Description: rss channel lastBuildDate 
+Description: channel lastBuildDate
 -->
 <rss version="2.0">
-  <channel>
-    <lastBuildDate>Sun, 06 Jul 2014 12:56:00 GMT</lastBuildDate>
-  </channel>
+<channel>
+  <lastBuildDate>Sat, 07 Sep 2002 00:00:01 GMT</lastBuildDate>
+</channel>
 </rss>
