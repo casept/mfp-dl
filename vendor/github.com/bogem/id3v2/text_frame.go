@@ -14,19 +14,6 @@ import (
 
 // TextFrame is used to work with all text frames
 // (all T*** frames like TIT2 (title), TALB (album) and so on).
-//
-// Example of reading text frames:
-//
-//	tf := tag.GetTextFrame(tag.CommonID("Mood"))
-//	fmt.Println(tf.Text)
-//
-// Example of adding text frames to tag:
-//
-//	textFrame := id3v2.TextFrame{
-//		Encoding: id3v2.ENUTF8,
-//		Text:     "Happy",
-//	}
-//	tag.AddFrame(tag.CommonID("Mood"), textFrame)
 type TextFrame struct {
 	Encoding util.Encoding
 	Text     string
@@ -45,7 +32,7 @@ func (tf TextFrame) WriteTo(w io.Writer) (n int64, err error) {
 	if err != nil {
 		return
 	}
-	n += 1
+	n++
 
 	i, err = bw.WriteString(tf.Text)
 	if err != nil {

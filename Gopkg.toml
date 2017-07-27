@@ -67,12 +67,12 @@
 
 
 [[constraint]]
+  branch = "master"
   name = "github.com/bogem/id3v2"
-  version = "0.10.0"
 
 [[constraint]]
+  branch = "master"
   name = "github.com/mmcdole/gofeed"
-  version = "1.0.0-beta"
 
 [[constraint]]
   branch = "master"

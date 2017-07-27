@@ -6,11 +6,10 @@ package id3v2
 
 import (
 	"errors"
-	"fmt"
 	"io"
-	"io/ioutil"
+	"strconv"
 
-	"github.com/bogem/id3v2/bbpool"
+	"github.com/bogem/id3v2/bspool"
 	"github.com/bogem/id3v2/lrpool"
 	"github.com/bogem/id3v2/util"
 )
@@ -24,45 +23,44 @@ type frameHeader struct {
 	BodySize int64
 }
 
-func parseTag(rd io.Reader, opts Options) (*Tag, error) {
+// parse finds ID3v2 tag in rd and parses it to tag considering opts.
+// If rd is smaller than expected, it returns ErrSmallHeaderSize.
+func (tag *Tag) parse(rd io.Reader, opts Options) error {
 	if rd == nil {
-		return nil, errors.New("reader is nil")
+		return errors.New("rd is nil")
 	}
 
 	header, err := parseHeader(rd)
-	if err == errNoTag {
-		return newTag(rd, 0, 4), nil
+	if err == errNoTag || err == io.EOF {
+		tag.init(rd, 0, 4)
+		return nil
 	}
 	if err != nil {
-		return nil, errors.New("error by parsing tag header: " + err.Error())
+		return errors.New("error by parsing tag header: " + err.Error())
 	}
 	if header.Version < 3 {
-		err = errors.New(fmt.Sprint("unsupported version of ID3 tag: ", header.Version))
-		return nil, err
+		err = errors.New("unsupported version of ID3 tag: " + strconv.Itoa(int(header.Version)))
+		return err
 	}
 
-	tag := newTag(rd, tagHeaderSize+header.FramesSize, header.Version)
-	if opts.Parse {
-		err = tag.parseAllFrames(opts)
+	tag.init(rd, tagHeaderSize+header.FramesSize, header.Version)
+	if !opts.Parse {
+		return nil
 	}
-
-	return tag, err
+	return tag.parseFrames(opts)
 }
 
-func newTag(rd io.Reader, originalSize int64, version byte) *Tag {
-	tag := &Tag{
-		frames:    make(map[string]Framer),
-		sequences: make(map[string]*sequence),
-
-		reader:       rd,
-		originalSize: originalSize,
-		version:      version,
-	}
-
-	return tag
+// init initializes tag by deleting all frames in it, setting reader,
+// originialSize and version.
+// init doesn't parse frames, it only set the fields.
+func (tag *Tag) init(rd io.Reader, originalSize int64, version byte) {
+	tag.DeleteAllFrames()
+	tag.reader = rd
+	tag.originalSize = originalSize
+	tag.version = version
 }
 
-func (tag *Tag) parseAllFrames(opts Options) error {
+func (tag *Tag) parseFrames(opts Options) error {
 	// Size of frames in tag = size of whole tag - size of tag header.
 	framesSize := tag.originalSize - tagHeaderSize
 
@@ -73,9 +71,11 @@ func (tag *Tag) parseAllFrames(opts Options) error {
 		parseIDs[tag.CommonID(description)] = true
 	}
 
+	buf := bspool.Get(32 * 1024)
+	defer bspool.Put(buf)
 	for framesSize > 0 {
 		// Parse frame header.
-		header, err := parseFrameHeader(tag.reader)
+		header, err := parseFrameHeader(buf, tag.reader)
 		if err == io.EOF || err == errBlankFrame || err == util.ErrInvalidSizeFormat {
 			break
 		}
@@ -93,11 +93,11 @@ func (tag *Tag) parseAllFrames(opts Options) error {
 		defer lrpool.Put(bodyRd)
 
 		// If user set opts.ParseFrames, take it into consideration.
-		if len(parseIDs) > 0 {
-			if !parseIDs[id] {
-				_, err = io.Copy(ioutil.Discard, bodyRd)
-				continue
+		if len(parseIDs) > 0 && !parseIDs[id] {
+			if err := skipReaderBuf(bodyRd, buf); err != nil {
+				return err
 			}
+			continue
 		}
 
 		// Parse frame body.
@@ -117,24 +117,20 @@ func (tag *Tag) parseAllFrames(opts Options) error {
 	return nil
 }
 
-func parseFrameHeader(rd io.Reader) (frameHeader, error) {
+func parseFrameHeader(buf []byte, rd io.Reader) (frameHeader, error) {
 	var header frameHeader
 
-	// Limit rd by frameHeaderSize.
-	bodyRd := lrpool.Get(rd, frameHeaderSize)
-	defer lrpool.Put(bodyRd)
+	if len(buf) < frameHeaderSize {
+		return header, errors.New("parseFrameHeader: buf is smaller than frame header size")
+	}
 
-	fhBuf := bbpool.Get()
-	defer bbpool.Put(fhBuf)
-
-	_, err := fhBuf.ReadFrom(bodyRd)
-	if err != nil {
+	fhBuf := buf[:frameHeaderSize]
+	if _, err := rd.Read(fhBuf); err != nil {
 		return header, err
 	}
-	data := fhBuf.Bytes()
 
-	id := string(data[:4])
-	bodySize, err := util.ParseSize(data[4:8])
+	id := string(fhBuf[:4])
+	bodySize, err := util.ParseSize(fhBuf[4:8])
 	if err != nil {
 		return header, err
 	}
@@ -146,7 +142,20 @@ func parseFrameHeader(rd io.Reader) (frameHeader, error) {
 	header.ID = id
 	header.BodySize = bodySize
 	return header, nil
+}
 
+// skipReaderBuf just reads rd until io.EOF.
+func skipReaderBuf(rd io.Reader, buf []byte) error {
+	for {
+		_, err := rd.Read(buf)
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func parseFrameBody(id string, rd io.Reader) (Framer, error) {

@@ -40,30 +40,30 @@ const (
 // Available encodings.
 var (
 	// ISO-8859-1.
-	ENISO = util.Encoding{
+	EncodingISO = util.Encoding{
 		Key:              0,
 		TerminationBytes: []byte{0},
 	}
 
 	// UTF-16 encoded Unicode with BOM.
-	ENUTF16 = util.Encoding{
+	EncodingUTF16 = util.Encoding{
 		Key:              1,
 		TerminationBytes: []byte{0, 0},
 	}
 
 	// UTF-16BE encoded Unicode without BOM.
-	ENUTF16BE = util.Encoding{
+	EncodingUTF16BE = util.Encoding{
 		Key:              2,
 		TerminationBytes: []byte{0, 0},
 	}
 
 	// UTF-8 encoded Unicode.
-	ENUTF8 = util.Encoding{
+	EncodingUTF8 = util.Encoding{
 		Key:              3,
 		TerminationBytes: []byte{0},
 	}
 
-	Encodings = []util.Encoding{ENISO, ENUTF16, ENUTF16BE, ENUTF8}
+	Encodings = []util.Encoding{EncodingISO, EncodingUTF16, EncodingUTF16BE, EncodingUTF8}
 )
 
 // Open opens file with name and passes it to OpenFile.
@@ -79,5 +79,14 @@ func Open(name string, opts Options) (*Tag, error) {
 // ParseReader parses rd and finds tag in it considering opts.
 // If there is no tag in rd, it will create new one with version ID3v2.4.
 func ParseReader(rd io.Reader, opts Options) (*Tag, error) {
-	return parseTag(rd, opts)
+	tag := NewEmptyTag()
+	err := tag.parse(rd, opts)
+	return tag, err
+}
+
+// NewEmptyTag returns an empty ID3v2.4 tag without any frames and reader.
+func NewEmptyTag() *Tag {
+	tag := new(Tag)
+	tag.init(nil, 0, 4)
+	return tag
 }

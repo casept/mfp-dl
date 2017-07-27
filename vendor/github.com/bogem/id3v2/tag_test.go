@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/bogem/id3v2/util"
@@ -27,39 +28,39 @@ const (
 
 var (
 	frontCover = PictureFrame{
-		Encoding:    ENUTF8,
+		Encoding:    EncodingUTF8,
 		MimeType:    "image/jpeg",
 		PictureType: PTFrontCover,
 		Description: "Front cover",
 	}
 	backCover = PictureFrame{
-		Encoding:    ENUTF8,
+		Encoding:    EncodingUTF8,
 		MimeType:    "image/jpeg",
 		PictureType: PTBackCover,
 		Description: "Back cover",
 	}
 
 	engUSLF = UnsynchronisedLyricsFrame{
-		Encoding:          ENUTF8,
+		Encoding:          EncodingUTF8,
 		Language:          "eng",
 		ContentDescriptor: "Content descriptor",
 		Lyrics:            "bogem/id3v2",
 	}
 	gerUSLF = UnsynchronisedLyricsFrame{
-		Encoding:          ENUTF8,
+		Encoding:          EncodingUTF8,
 		Language:          "ger",
 		ContentDescriptor: "Inhaltsdeskriptor",
 		Lyrics:            "Einigkeit und Recht und Freiheit",
 	}
 
 	engComm = CommentFrame{
-		Encoding:    ENUTF8,
+		Encoding:    EncodingUTF8,
 		Language:    "eng",
 		Description: "Short description",
 		Text:        "The actual text",
 	}
 	gerComm = CommentFrame{
-		Encoding:    ENUTF8,
+		Encoding:    EncodingUTF8,
 		Language:    "ger",
 		Description: "Kurze Beschreibung",
 		Text:        "Der eigentliche Text",
@@ -67,13 +68,11 @@ var (
 
 	unknownFrameID = "WPUB"
 	unknownFrame   = UnknownFrame{
-		body: []byte("https://soundcloud.com/suicidepart2"),
+		Body: []byte("https://soundcloud.com/suicidepart2"),
 	}
 
 	// Parse all frames
-	defaultOpts = Options{
-		Parse: true,
-	}
+	defaultOpts = Options{Parse: true}
 )
 
 func init() {
@@ -99,6 +98,7 @@ func resetMP3Tag() error {
 	if tag == nil || err != nil {
 		return err
 	}
+	defer tag.Close()
 
 	tag.SetTitle("Title")
 	tag.SetArtist("Artist")
@@ -121,15 +121,7 @@ func resetMP3Tag() error {
 	// Set unknown frame
 	tag.AddFrame(unknownFrameID, unknownFrame)
 
-	if err = tag.Save(); err != nil {
-		return err
-	}
-
-	if err = tag.Close(); err != nil {
-		return err
-	}
-
-	return nil
+	return tag.Save()
 }
 
 func TestCountLenSize(t *testing.T) {
@@ -137,18 +129,19 @@ func TestCountLenSize(t *testing.T) {
 	if tag == nil || err != nil {
 		t.Fatal("Error while opening mp3 file:", err)
 	}
+	defer tag.Close()
 
-	// Check count
+	// Check count.
 	if tag.Count() != countOfFrames {
 		t.Errorf("Expected frames: %v, got: %v", countOfFrames, tag.Count())
 	}
 
-	// Check len of tag.AllFrames()
-	if len(tag.AllFrames()) != 9 {
+	// Check len of tag.AllFrames().
+	if len(tag.AllFrames()) != 9 { // 9 - count of all ids
 		t.Errorf("Expected: %v, got: %v", 9, len(tag.AllFrames()))
 	}
 
-	// Check saved tag size by reading the 6:10 bytes of mp3 file
+	// Check saved tag size by reading the 6:10 bytes of mp3 file.
 	mp3, err := os.Open(mp3Name)
 	if err != nil {
 		t.Fatal("Error while opening mp3 file:", err)
@@ -171,25 +164,22 @@ func TestCountLenSize(t *testing.T) {
 		t.Errorf("Expected size of frames: %v, got: %v", framesSize, size)
 	}
 
-	// Check tag.Size
+	// Check tag.Size().
 	tagSize := tagHeaderSize + framesSize
 	if tag.Size() != tagSize {
 		t.Errorf("Expected tag.Size(): %v, got: %v", tagSize, tag.Size())
 	}
-
-	if err = tag.Close(); err != nil {
-		t.Error("Error while closing a tag:", err)
-	}
 }
 
 // TestIntegrityOfMusicAtTheBeginning checks
-// if tag.Save doesn't truncate or add some extra bytes at the beginning
+// if tag.Save() doesn't truncate or add some extra bytes at the beginning
 // of music part.
 func TestIntegrityOfMusicAtTheBeginning(t *testing.T) {
 	mp3, err := os.Open(mp3Name)
 	if err != nil {
 		t.Fatal("Error while opening mp3 file:", err)
 	}
+	defer mp3.Close()
 
 	rd := bufio.NewReader(mp3)
 	n, err := rd.Discard(tagSize)
@@ -213,20 +203,17 @@ func TestIntegrityOfMusicAtTheBeginning(t *testing.T) {
 	if !bytes.Equal(expected, got) {
 		t.Fatalf("Expected %v, got %v", expected, got)
 	}
-
-	if err = mp3.Close(); err != nil {
-		t.Error("Error while closing a tag:", err)
-	}
 }
 
 // TestIntegrityOfMusicAtTheEnd checks
-// if tag.Save doesn't truncate music part or add some extra bytes at the end
+// if tag.Save() doesn't truncate music part or add some extra bytes at the end
 // of music part.
 func TestIntegrityOfMusicAtTheEnd(t *testing.T) {
 	mp3, err := os.Open(mp3Name)
 	if err != nil {
 		t.Fatal("Error while opening mp3 file:", err)
 	}
+	defer mp3.Close()
 
 	rd := bufio.NewReader(mp3)
 	expected := []byte{85, 85, 85, 85, 85, 85, 85}
@@ -251,14 +238,10 @@ func TestIntegrityOfMusicAtTheEnd(t *testing.T) {
 	if !bytes.Equal(expected, got) {
 		t.Fatalf("Expected %v, got %v", expected, got)
 	}
-
-	if err = mp3.Close(); err != nil {
-		t.Error("Error while closing a tag:", err)
-	}
 }
 
 // TestCheckPermissions checks
-// if tag.Save creates file with the same permissions of original file.
+// if tag.Save() creates file with the same permissions of original file.
 func TestCheckPermissions(t *testing.T) {
 	originalFile, err := os.Open(mp3Name)
 	if err != nil {
@@ -278,9 +261,7 @@ func TestCheckPermissions(t *testing.T) {
 	if err = tag.Save(); err != nil {
 		t.Error("Error while saving a tag:", err)
 	}
-	if err = tag.Close(); err != nil {
-		t.Error("Error while closing a tag:", err)
-	}
+	tag.Close()
 
 	newFile, err := os.Open(mp3Name)
 	if err != nil {
@@ -297,16 +278,13 @@ func TestCheckPermissions(t *testing.T) {
 	}
 }
 
-// TestBlankID deletes all frames in tag, adds frame with blank id and checks
-// if no tag is written by tag.Size (tag.WriteTo must not write tag to file
-// if there are 0 frames).
+// TestBlankID creates empty tag, adds frame with blank id and checks
+// if no tag is written by tag.WriteTo() (it must not write tag to buf
+// if there are no or only blank frames).
 func TestBlankID(t *testing.T) {
-	tag, err := Open(mp3Name, defaultOpts)
-	if tag == nil || err != nil {
-		t.Fatal("Error while opening mp3 file:", err)
-	}
+	t.Parallel()
 
-	tag.DeleteAllFrames()
+	tag := NewEmptyTag()
 	tag.AddFrame("", unknownFrame)
 
 	if tag.Count() > 0 {
@@ -314,89 +292,162 @@ func TestBlankID(t *testing.T) {
 	}
 
 	if tag.HasFrames() {
-		t.Error("tag.HasFrames should return false, but it returns true")
+		t.Error("tag.HasFrames() should return false, but it returns true")
 	}
 
 	if tag.Size() != 0 {
 		t.Error("Size of tag should be 0. Actual tag size:", tag.Size())
 	}
 
-	// tag.Save should write no frames to file
-	if err = tag.Save(); err != nil {
-		t.Error("Error while saving a tag:", err)
+	// It should write no frames to buf.
+	buf := new(bytes.Buffer)
+	if _, err := tag.WriteTo(buf); err != nil {
+		t.Fatal("Error while writing a tag:", err)
 	}
-
-	if err = tag.Close(); err != nil {
-		t.Error("Error while closing a tag:", err)
-	}
-
-	// Parse tag. It should be no frames
-	parsedTag, err := Open(mp3Name, defaultOpts)
-	if parsedTag == nil || err != nil {
-		t.Fatal("Error while opening mp3 file:", err)
-	}
-
-	if tag.Count() > 0 {
-		t.Error("There should be no frames in parsed tag, but there are", tag.Count())
-	}
-
-	if tag.HasFrames() {
-		t.Error("Parsed tag.HasFrames should return false, but it returns true")
-	}
-
-	if tag.Size() != 0 {
-		t.Error("Size of parsed tag should be 0. Actual tag size:", tag.Size())
+	if buf.Len() > 0 {
+		t.Fatal("tag.WriteTo(buf) should write no frames, but it wrote")
 	}
 }
 
-// TestInvalidLanguageCommentFrame checks,
-// if tag.Save returns the correct error by writing the comment frame with
+// TestInvalidLanguageCommentFrame checks
+// if tag.WriteTo() returns the correct error by writing the comment frame with
 // incorrect length of language code.
 func TestInvalidLanguageCommentFrame(t *testing.T) {
-	tag, err := Open(mp3Name, defaultOpts)
-	if tag == nil || err != nil {
-		t.Fatal("Error while opening mp3 file:", err)
-	}
+	t.Parallel()
 
-	tag.DeleteAllFrames()
+	tag := NewEmptyTag()
 	tag.AddCommentFrame(CommentFrame{
-		Encoding: ENUTF8,
+		Encoding: EncodingUTF8,
 		Language: "en", // should be "eng" according to ISO 639-2
 		Text:     "The actual text",
 	})
 
-	err = tag.Save()
+	_, err := tag.WriteTo(ioutil.Discard)
 	if err == nil {
-		t.Fatal("tag.Save must return the error about invalid language code")
+		t.Fatal("tag.WriteTo() must return the error about invalid language code")
 	}
 	if !strings.Contains(err.Error(), "must consist") {
 		t.Fatalf("Incorrect error. Expected error contains %q, got %q", "must consist", err)
 	}
-
 }
 
-// TestInvalidLanguageUSLF checks,
-// if tag.Save returns the correct error by writing the comment frame with
+// TestInvalidLanguageUSLF checks
+// if tag.WriteTo() returns the correct error by writing the comment frame with
 // incorrect length of language code.
 func TestInvalidLanguageUSLF(t *testing.T) {
-	tag, err := Open(mp3Name, defaultOpts)
-	if tag == nil || err != nil {
-		t.Fatal("Error while opening mp3 file:", err)
-	}
+	t.Parallel()
 
-	tag.DeleteAllFrames()
+	tag := NewEmptyTag()
 	tag.AddUnsynchronisedLyricsFrame(UnsynchronisedLyricsFrame{
-		Encoding: ENUTF8,
+		Encoding: EncodingUTF8,
 		Language: "en", // should be "eng" according to ISO 639-2
 		Lyrics:   "Lyrics",
 	})
 
-	err = tag.Save()
+	_, err := tag.WriteTo(ioutil.Discard)
 	if err == nil {
-		t.Fatal("tag.Save must return the error about invalid language code")
+		t.Fatal("tag.WriteTo() must return the error about invalid language code")
 	}
 	if !strings.Contains(err.Error(), "must consist") {
 		t.Fatalf("Incorrect error. Expected error contains %q, got %q", "must consist", err)
 	}
+}
 
+// TestSaveAndCloseEmptyTag checks
+// if tag.Save() and tag.Close() return an error for empty tag.
+func TestSaveAndCloseEmptyTag(t *testing.T) {
+	t.Parallel()
+
+	tag := NewEmptyTag()
+	if err := tag.Save(); err == nil {
+		t.Error("By saving empty tag we wait for an error, but it's not returned")
+	}
+	if err := tag.Close(); err == nil {
+		t.Error("By closing empty tag we wait for an error, but it's not returned")
+	}
+}
+
+// TestEmptyTagWriteTo checks
+// if tag.WriteTo() works correctly for empty tag.
+func TestEmptyTagWriteTo(t *testing.T) {
+	t.Parallel()
+
+	tag := NewEmptyTag()
+	tag.SetArtist("Artist")
+	tag.SetTitle("Title")
+
+	buf := new(bytes.Buffer)
+	if _, err := tag.WriteTo(buf); err != nil {
+		t.Fatal("Error while writing to buf:", err)
+	}
+	if buf.Len() == 0 {
+		t.Fatal("buf is empty, but it must have tag")
+	}
+
+	parsedTag, err := ParseReader(buf, Options{Parse: true})
+	if err != nil {
+		t.Fatal("Error while parsing buf:", err)
+	}
+	if parsedTag.Artist() != "Artist" {
+		t.Error("Expected Artist, got", parsedTag.Artist())
+	}
+	if parsedTag.Title() != "Title" {
+		t.Error("Expected Title, got", parsedTag.Title())
+	}
+}
+
+// TestResetTag checks if tag.Reset() correctly parses mp3.
+func TestResetTag(t *testing.T) {
+	mp3, err := os.Open(mp3Name)
+	if err != nil {
+		t.Fatal("Error while opening mp3 file:", err)
+	}
+	defer mp3.Close()
+
+	tag := NewEmptyTag()
+	if err := tag.Reset(mp3, defaultOpts); err != nil {
+		t.Fatal("Error while reseting tag:", err)
+	}
+
+	// Check if it parsed.
+	if tag.Count() != countOfFrames {
+		t.Errorf("Expected frames: %v, got: %v", countOfFrames, tag.Count())
+	}
+}
+
+// TestConcurrent creates sync.Pool with tags, executes 100 goroutines and
+// checks if id3v2 works correctly in concurrent environment (one tag per goroutine).
+func TestConcurrent(t *testing.T) {
+	tagPool := sync.Pool{New: func() interface{} { return NewEmptyTag() }}
+
+	var wg sync.WaitGroup
+	wg.Add(100)
+	for i := 0; i < 100; i++ {
+		go func() {
+			defer wg.Done()
+
+			tag := tagPool.Get().(*Tag)
+			defer tagPool.Put(tag)
+
+			file, err := os.Open(mp3Name)
+			if err != nil {
+				t.Fatal("Error while opening mp3:", err)
+			}
+			defer file.Close()
+
+			if err := tag.Reset(file, defaultOpts); err != nil {
+				t.Fatal("Error while reseting tag to file:", err)
+			}
+
+			// Just check if it's correctly parsed.
+			if tag.Count() != countOfFrames {
+				t.Fatalf("Expected frames: %v, got: %v", countOfFrames, tag.Count())
+			}
+
+			if _, err := tag.WriteTo(ioutil.Discard); err != nil {
+				t.Fatal("Error while writing to ioutil.Discard:", err)
+			}
+		}()
+	}
+	wg.Wait()
 }

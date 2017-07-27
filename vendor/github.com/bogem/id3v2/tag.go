@@ -10,6 +10,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/bogem/id3v2/bspool"
 	"github.com/bogem/id3v2/bwpool"
 	"github.com/bogem/id3v2/util"
 )
@@ -40,7 +41,7 @@ func (tag *Tag) AddFrame(id string, f Framer) {
 
 	if mustFrameBeInSequence(id) {
 		if tag.sequences[id] == nil {
-			tag.sequences[id] = newSequence()
+			tag.sequences[id] = getSequence()
 		}
 		tag.sequences[id].AddFrame(f)
 	} else {
@@ -105,14 +106,30 @@ func (tag *Tag) AllFrames() map[string][]Framer {
 
 // DeleteAllFrames deletes all frames in tag.
 func (tag *Tag) DeleteAllFrames() {
-	tag.frames = make(map[string]Framer)
-	tag.sequences = make(map[string]*sequence)
+	if tag.frames == nil || len(tag.frames) > 0 {
+		tag.frames = make(map[string]Framer)
+	}
+	if tag.sequences == nil || len(tag.sequences) > 0 {
+		for _, s := range tag.sequences {
+			putSequence(s)
+		}
+		tag.sequences = make(map[string]*sequence)
+	}
 }
 
 // DeleteFrames deletes frames in tag with given id.
 func (tag *Tag) DeleteFrames(id string) {
 	delete(tag.frames, id)
-	delete(tag.sequences, id)
+	if s, ok := tag.sequences[id]; ok {
+		putSequence(s)
+		delete(tag.sequences, id)
+	}
+}
+
+// Reset deletes all frames in tag and parses rd considering opts.
+func (tag *Tag) Reset(rd io.Reader, opts Options) error {
+	tag.DeleteAllFrames()
+	return tag.parse(rd, opts)
 }
 
 // GetFrames returns frames with corresponding id.
@@ -174,7 +191,7 @@ func (tag *Tag) Title() string {
 }
 
 func (tag *Tag) SetTitle(title string) {
-	tag.AddFrame(tag.CommonID("Title/Songname/Content description"), TextFrame{Encoding: ENUTF8, Text: title})
+	tag.AddFrame(tag.CommonID("Title/Songname/Content description"), TextFrame{Encoding: EncodingUTF8, Text: title})
 }
 
 func (tag *Tag) Artist() string {
@@ -183,7 +200,7 @@ func (tag *Tag) Artist() string {
 }
 
 func (tag *Tag) SetArtist(artist string) {
-	tag.AddFrame(tag.CommonID("Lead artist/Lead performer/Soloist/Performing group"), TextFrame{Encoding: ENUTF8, Text: artist})
+	tag.AddFrame(tag.CommonID("Lead artist/Lead performer/Soloist/Performing group"), TextFrame{Encoding: EncodingUTF8, Text: artist})
 }
 
 func (tag *Tag) Album() string {
@@ -192,7 +209,7 @@ func (tag *Tag) Album() string {
 }
 
 func (tag *Tag) SetAlbum(album string) {
-	tag.AddFrame(tag.CommonID("Album/Movie/Show title"), TextFrame{Encoding: ENUTF8, Text: album})
+	tag.AddFrame(tag.CommonID("Album/Movie/Show title"), TextFrame{Encoding: EncodingUTF8, Text: album})
 }
 
 func (tag *Tag) Year() string {
@@ -201,7 +218,7 @@ func (tag *Tag) Year() string {
 }
 
 func (tag *Tag) SetYear(year string) {
-	tag.AddFrame(tag.CommonID("Year"), TextFrame{Encoding: ENUTF8, Text: year})
+	tag.AddFrame(tag.CommonID("Year"), TextFrame{Encoding: EncodingUTF8, Text: year})
 }
 
 func (tag *Tag) Genre() string {
@@ -210,7 +227,7 @@ func (tag *Tag) Genre() string {
 }
 
 func (tag *Tag) SetGenre(genre string) {
-	tag.AddFrame(tag.CommonID("Content type"), TextFrame{Encoding: ENUTF8, Text: genre})
+	tag.AddFrame(tag.CommonID("Content type"), TextFrame{Encoding: EncodingUTF8, Text: genre})
 }
 
 // iterateOverAllFrames iterates over every single frame in tag and calls
@@ -254,7 +271,7 @@ func (tag *Tag) Version() byte {
 }
 
 // SetVersion sets given ID3v2 version to tag.
-// If version is less than 3 or more than 4, then this method will do nothing.
+// If version is less than 3 or greater than 4, then this method will do nothing.
 // If tag has some frames, which are deprecated or changed in given version,
 // then to your notice you can delete, change or just stay them.
 func (tag *Tag) SetVersion(version byte) {
@@ -303,7 +320,9 @@ func (tag *Tag) Save() error {
 	}
 
 	// Write to new file the music part.
-	if _, err = io.Copy(newFile, originalFile); err != nil {
+	buf := bspool.Get(32 * 1024)
+	defer bspool.Put(buf)
+	if _, err = io.CopyBuffer(newFile, originalFile, buf); err != nil {
 		return err
 	}
 
@@ -336,22 +355,20 @@ func (tag *Tag) Save() error {
 // It returns the number of bytes written and error during the write.
 // It returns nil as error if the write was successful.
 func (tag *Tag) WriteTo(w io.Writer) (n int64, err error) {
-	// Form size of frames
+	if w == nil {
+		return 0, errors.New("w is nil")
+	}
+
+	// Count size of frames.
 	framesSize := tag.Size() - tagHeaderSize
 	if framesSize <= 0 {
 		return 0, nil
 	}
 
-	byteFramesSize, err := util.FormSize(framesSize)
-	if err != nil {
-		return 0, err
-	}
-
+	// Write tag header.
 	bw := bwpool.Get(w)
 	defer bwpool.Put(bw)
-
-	// Write tag header.
-	if err := writeTagHeader(bw, byteFramesSize, tag.version); err != nil {
+	if err := writeTagHeader(bw, framesSize, tag.version); err != nil {
 		return n, err
 	}
 	n += tagHeaderSize
@@ -379,18 +396,13 @@ func writeFrame(bw *bufio.Writer, id string, frame Framer) (int64, error) {
 }
 
 func writeFrameHeader(bw *bufio.Writer, id string, frameSize int) error {
-	size, err := util.FormSize(frameSize)
-	if err != nil {
-		return err
-	}
-
 	// ID
 	if _, err := bw.WriteString(id); err != nil {
 		return err
 	}
 
 	// Size
-	if _, err := bw.Write(size); err != nil {
+	if err := util.WriteBytesSize(bw, frameSize); err != nil {
 		return err
 	}
 

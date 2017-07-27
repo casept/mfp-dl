@@ -6,24 +6,30 @@ package id3v2
 
 import (
 	"bufio"
+	"bytes"
 	"errors"
 	"io"
 
 	"github.com/bogem/id3v2/util"
 )
 
-const (
-	id3Identifier = "ID3"
-	tagHeaderSize = 10
-)
+const tagHeaderSize = 10
 
-var errNoTag = errors.New("there is no tag in file")
+var (
+	id3Identifier = []byte("ID3")
+	errNoTag      = errors.New("there is no tag in file")
+
+	ErrSmallHeaderSize = errors.New("size of tag header is less than expected")
+)
 
 type tagHeader struct {
 	FramesSize int64
 	Version    byte
 }
 
+// parseHeader parses tag header in rd.
+// If there is no tag in rd, it returns errNoTag.
+// If rd is smaller than expected, it returns ErrSmallHeaderSize.
 func parseHeader(rd io.Reader) (tagHeader, error) {
 	var header tagHeader
 
@@ -33,8 +39,7 @@ func parseHeader(rd io.Reader) (tagHeader, error) {
 		return header, err
 	}
 	if n < tagHeaderSize {
-		err = errors.New("size of tag header is less than expected")
-		return header, err
+		return header, ErrSmallHeaderSize
 	}
 
 	if !isID3Tag(data[0:3]) {
@@ -55,12 +60,12 @@ func isID3Tag(data []byte) bool {
 	if len(data) != len(id3Identifier) {
 		return false
 	}
-	return string(data[0:3]) == id3Identifier
+	return bytes.Equal(data, id3Identifier)
 }
 
-func writeTagHeader(bw *bufio.Writer, framesSize []byte, version byte) error {
+func writeTagHeader(bw *bufio.Writer, framesSize int, version byte) error {
 	// Identifier
-	if _, err := bw.WriteString(id3Identifier); err != nil {
+	if _, err := bw.Write(id3Identifier); err != nil {
 		return err
 	}
 
@@ -80,7 +85,7 @@ func writeTagHeader(bw *bufio.Writer, framesSize []byte, version byte) error {
 	}
 
 	// Size of frames
-	if _, err := bw.Write(framesSize); err != nil {
+	if err := util.WriteBytesSize(bw, framesSize); err != nil {
 		return err
 	}
 
