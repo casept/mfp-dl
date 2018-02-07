@@ -109,22 +109,67 @@ func createDir(destDirectory string) {
 	}
 }
 
-// Add album metadata to the track supplied.
-// This is needed because the downloaded files don't contain this data.
-func setAlbum(file string) {
+// setMetadata adds album metadata and artwork to the track supplied.
+func setMetadata(file string) {
 	mp3File, err := id3v2.Open(file, id3v2.Options{Parse: true})
 	if err != nil {
 		panic(err)
 	}
 	defer mp3File.Close()
 	mp3File.SetAlbum("Music For Programming")
+
+	dir := filepath.Dir(file)
+	// Ensure cover is present in DL dir
+	getCover(dir)
+	coverPath := filepath.Join(dir, "folder.jpg")
+	cover, err := ioutil.ReadFile(coverPath)
+	if err != nil {
+		log.Fatal("Error while reading album artwork file", err)
+	}
+	pic := id3v2.PictureFrame{
+		Encoding:    id3v2.EncodingUTF8,
+		MimeType:    "image/jpeg",
+		PictureType: id3v2.PTFrontCover,
+		Description: "Front cover",
+		Picture:     cover,
+	}
+	mp3File.AddAttachedPicture(pic)
+}
+
+// isTrackComplete checks whether a track is present and fully downloaded.
+func isTrackComplete(dir string, title string, URL string) (bool, error) {
+	trackPath := filepath.Join(dir, title+".mp3")
+	stat, err := os.Stat(trackPath)
+	// Check whether track exists at all.
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	// Unknown stat error, return it.
+	if err != nil {
+		return false, err
+	}
+	// Check if length matches.
+	// If not it's a sign of an incomplete download/data corruption.
+	req, err := http.Head(URL)
+	if err != nil {
+		return false, err
+	}
+	if stat.Size() != req.ContentLength {
+		log.Printf("Track %v is of length %d on disk, %d expected. Redownloading...\n", title, stat.Size(), req.ContentLength)
+		return false, nil
+	}
+	return true, nil
 }
 
 // Download supplied track to supplied directory if it doesn't exist on disk
 func getTrack(destDirectory string, title string, URL string) {
 	trackPath := filepath.Join(destDirectory, title+".mp3")
-	if _, err := os.Stat(trackPath); os.IsNotExist(err) {
-		log.Printf("Track '" + title + "' does not exist on disk, downloading... ")
+	complete, err := isTrackComplete(destDirectory, title, URL)
+	if err != nil {
+		log.Printf("Encountered error while trying to check whether track %v has already been downloaded: %v\n", title, err.Error())
+	}
+	if !complete {
+		log.Printf("Track %v does not exist on disk, downloading...\n", title)
 		file, err := os.Create(trackPath)
 		if err != nil {
 			panic(err)
@@ -153,7 +198,10 @@ func getTrack(destDirectory string, title string, URL string) {
 		bar.Finish()
 		// We don't use n
 		_ = n
-		setAlbum(trackPath)
-		log.Printf("Track '" + title + "' downloaded!")
+
+		log.Printf("Track %v downloaded!\n", title)
+		log.Printf("Setting metadata for track %v\n", title)
+		setMetadata(trackPath)
+		log.Println("Metadata set!")
 	}
 }
