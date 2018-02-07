@@ -2,15 +2,17 @@ package main
 
 import (
 	"flag"
-	"github.com/bogem/id3v2"
-	"github.com/mmcdole/gofeed"
-	"gopkg.in/cheggaaa/pb.v1"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
+
+	"github.com/bogem/id3v2"
+	"github.com/mmcdole/gofeed"
+	"gopkg.in/cheggaaa/pb.v1"
 )
 
 func main() {
@@ -44,9 +46,9 @@ func reverseStringSlice(ss []string) []string {
 	return ss
 }
 
-// Get titles and URLs to tracks from RSS feed
+// getTracks gets titles and URLs to tracks from RSS feed
 func getTracks() (tracks tracks) {
-	log.Printf("Downloading and parsing tracks index...")
+	log.Println("Downloading and parsing tracks index...")
 	feedParser := gofeed.NewParser()
 	feed, err := feedParser.ParseURL("https://musicforprogramming.net/rss.php")
 	if err != nil {
@@ -66,7 +68,7 @@ func getTracks() (tracks tracks) {
 	return tracks
 }
 
-// Download folder.jpg (album cover image) if it doesn't exist
+// getCover downloads folder.jpg (album cover image) if it doesn't exist
 func getCover(destDirectory string) {
 	coverPath := filepath.Join(destDirectory, "folder.jpg")
 	if _, err := os.Stat(coverPath); os.IsNotExist(err) {
@@ -91,11 +93,11 @@ func getCover(destDirectory string) {
 		}
 		// We don't use n
 		_ = n
-		log.Printf("Album cover downloaded!")
+		log.Println("Album cover downloaded!")
 	}
 }
 
-// Check if target directory exists, create if it doesn't
+// createDir checks whether the directory exists and creates it if it doesn't
 func createDir(destDirectory string) {
 	if _, err := os.Stat(destDirectory); os.IsNotExist(err) {
 		log.Printf("Directory " + destDirectory + " does not exist, creating...")
