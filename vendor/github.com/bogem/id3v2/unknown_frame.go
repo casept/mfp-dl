@@ -6,8 +6,6 @@ package id3v2
 
 import (
 	"io"
-
-	"github.com/bogem/id3v2/util"
 )
 
 // UnknownFrame is used for frames, which id3v2 so far doesn't know how to
@@ -21,12 +19,11 @@ func (uf UnknownFrame) Size() int {
 }
 
 func (uf UnknownFrame) WriteTo(w io.Writer) (n int64, err error) {
-	var i int
-	i, err = w.Write(uf.Body)
+	i, err := w.Write(uf.Body)
 	return int64(i), err
 }
 
 func parseUnknownFrame(rd io.Reader) (Framer, error) {
-	body, err := util.ReadAll(rd)
+	body, err := readAll(rd)
 	return UnknownFrame{Body: body}, err
 }

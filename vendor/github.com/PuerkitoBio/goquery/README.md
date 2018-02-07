@@ -1,5 +1,5 @@
 # goquery - a little like that j-thing, only in Go
-[![build status](https://secure.travis-ci.org/PuerkitoBio/goquery.png)](http://travis-ci.org/PuerkitoBio/goquery) [![GoDoc](https://godoc.org/github.com/PuerkitoBio/goquery?status.png)](http://godoc.org/github.com/PuerkitoBio/goquery) [![Sourcegraph Badge](https://sourcegraph.com/github.com/PuerkitoBio/goquery/-/badge.svg)](https://sourcegraph.com/github.com/PuerkitoBio/goquery?badge)
+[![build status](https://secure.travis-ci.org/PuerkitoBio/goquery.svg?branch=master)](http://travis-ci.org/PuerkitoBio/goquery) [![GoDoc](https://godoc.org/github.com/PuerkitoBio/goquery?status.png)](http://godoc.org/github.com/PuerkitoBio/goquery) [![Sourcegraph Badge](https://sourcegraph.com/github.com/PuerkitoBio/goquery/-/badge.svg)](https://sourcegraph.com/github.com/PuerkitoBio/goquery?badge)
 
 
 goquery brings a syntax and a set of features similar to [jQuery][] to the [Go language][go]. It is based on Go's [net/html package][html] and the CSS Selector library [cascadia][]. Since the net/html parser returns nodes, and not a full-featured DOM tree, jQuery's stateful manipulation functions (like height(), css(), detach()) have been left off.
@@ -37,6 +37,8 @@ Please note that because of the net/html dependency, goquery requires Go1.1+.
 
 **Note that goquery's API is now stable, and will not break.**
 
+*    **2018-01-28 (v1.3.0)** : Add `ToEnd` constant to `Slice` until the end of the selection (thanks to @davidjwilkins for raising the issue).
+*    **2018-01-11 (v1.2.0)** : Add `AddBack*` and deprecate `AndSelf` (thanks to @davidjwilkins).
 *    **2017-02-12 (v1.1.0)** : Add `SetHtml` and `SetText` (thanks to @glebtv).
 *    **2016-12-29 (v1.0.2)** : Optimize allocations for `Selection.Text` (thanks to @radovskyb).
 *    **2016-08-28 (v1.0.1)** : Optimize performance for large documents.
@@ -121,6 +123,7 @@ func main() {
 - [Goq][goq], an HTML deserialization and scraping library based on goquery and struct tags.
 - [andybalholm/cascadia][cascadia], the CSS selector library used by goquery.
 - [suntong/cascadia][cascadiacli], a command-line interface to the cascadia CSS selector library, useful to test selectors.
+- [asciimoo/colly](https://github.com/asciimoo/colly), a lightning fast and elegant Scraping Framework
 
 ## License
 

@@ -7,15 +7,11 @@ package id3v2
 import (
 	"errors"
 	"io"
-	"strconv"
-
-	"github.com/bogem/id3v2/bspool"
-	"github.com/bogem/id3v2/lrpool"
-	"github.com/bogem/id3v2/util"
 )
 
 const frameHeaderSize = 10
 
+var ErrUnsupportedVersion = errors.New("unsupported version of ID3 tag")
 var errBlankFrame = errors.New("id or size of frame are blank")
 
 type frameHeader struct {
@@ -39,8 +35,7 @@ func (tag *Tag) parse(rd io.Reader, opts Options) error {
 		return errors.New("error by parsing tag header: " + err.Error())
 	}
 	if header.Version < 3 {
-		err = errors.New("unsupported version of ID3 tag: " + strconv.Itoa(int(header.Version)))
-		return err
+		return ErrUnsupportedVersion
 	}
 
 	tag.init(rd, tagHeaderSize+header.FramesSize, header.Version)
@@ -50,11 +45,13 @@ func (tag *Tag) parse(rd io.Reader, opts Options) error {
 	return tag.parseFrames(opts)
 }
 
-// init initializes tag by deleting all frames in it, setting reader,
-// originialSize and version.
-// init doesn't parse frames, it only set the fields.
 func (tag *Tag) init(rd io.Reader, originalSize int64, version byte) {
 	tag.DeleteAllFrames()
+	if version == 4 {
+		tag.defaultEncoding = EncodingUTF8
+	} else {
+		tag.defaultEncoding = EncodingISO
+	}
 	tag.reader = rd
 	tag.originalSize = originalSize
 	tag.version = version
@@ -71,12 +68,12 @@ func (tag *Tag) parseFrames(opts Options) error {
 		parseIDs[tag.CommonID(description)] = true
 	}
 
-	buf := bspool.Get(32 * 1024)
-	defer bspool.Put(buf)
+	buf := getByteSlice(32 * 1024)
+	defer putByteSlice(buf)
 	for framesSize > 0 {
 		// Parse frame header.
 		header, err := parseFrameHeader(buf, tag.reader)
-		if err == io.EOF || err == errBlankFrame || err == util.ErrInvalidSizeFormat {
+		if err == io.EOF || err == errBlankFrame || err == ErrInvalidSizeFormat {
 			break
 		}
 		if err != nil {
@@ -89,10 +86,11 @@ func (tag *Tag) parseFrames(opts Options) error {
 		framesSize -= frameHeaderSize + bodySize
 
 		// Limit tag.reader by header.BodySize.
-		bodyRd := lrpool.Get(tag.reader, bodySize)
-		defer lrpool.Put(bodyRd)
+		bodyRd := getLimitedReader(tag.reader, bodySize)
+		defer putLimitedReader(bodyRd)
 
-		// If user set opts.ParseFrames, take it into consideration.
+		// If user set opts.ParseFrames and frame ID is not there,
+		// skip this frame.
 		if len(parseIDs) > 0 && !parseIDs[id] {
 			if err := skipReaderBuf(bodyRd, buf); err != nil {
 				return err
@@ -100,14 +98,26 @@ func (tag *Tag) parseFrames(opts Options) error {
 			continue
 		}
 
-		// Parse frame body.
 		frame, err := parseFrameBody(id, bodyRd)
 		if err != nil && err != io.EOF {
 			return err
 		}
 
-		// Add frame to tag.
 		tag.AddFrame(id, frame)
+
+		if len(parseIDs) > 0 {
+			// If the frame can be only one in tag,
+			// don't take into consideration more frames with id.
+			if !mustFrameBeInSequence(id) {
+				delete(parseIDs, id)
+
+				// And if it was last ID in parseIDs, we don't need to parse
+				// other frames, so break the parsing.
+				if len(parseIDs) == 0 {
+					break
+				}
+			}
+		}
 
 		if err == io.EOF {
 			break
@@ -130,7 +140,7 @@ func parseFrameHeader(buf []byte, rd io.Reader) (frameHeader, error) {
 	}
 
 	id := string(fhBuf[:4])
-	bodySize, err := util.ParseSize(fhBuf[4:8])
+	bodySize, err := parseSize(fhBuf[4:8])
 	if err != nil {
 		return header, err
 	}

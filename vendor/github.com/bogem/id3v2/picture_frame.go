@@ -4,13 +4,7 @@
 
 package id3v2
 
-import (
-	"io"
-
-	"github.com/bogem/id3v2/bwpool"
-	"github.com/bogem/id3v2/rdpool"
-	"github.com/bogem/id3v2/util"
-)
+import "io"
 
 // PictureFrame structure is used for picture frames (APIC).
 // The information about how to add picture frame to tag you can
@@ -18,7 +12,7 @@ import (
 //
 // Available picture types you can see in constants.
 type PictureFrame struct {
-	Encoding    util.Encoding
+	Encoding    Encoding
 	MimeType    string
 	PictureType byte
 	Description string
@@ -26,70 +20,54 @@ type PictureFrame struct {
 }
 
 func (pf PictureFrame) Size() int {
-	return 1 + len(pf.MimeType) + 1 + 1 + len(pf.Description) +
+	return 1 + len(pf.MimeType) + 1 + 1 + encodedSize(pf.Description, pf.Encoding) +
 		len(pf.Encoding.TerminationBytes) + len(pf.Picture)
 }
 
 func (pf PictureFrame) WriteTo(w io.Writer) (n int64, err error) {
-	var i int
-	bw := bwpool.Get(w)
-	defer bwpool.Put(bw)
+	bw, ok := resolveBufioWriter(w)
+	if !ok {
+		defer putBufioWriter(bw)
+	}
 
-	err = bw.WriteByte(pf.Encoding.Key)
+	var nn int
+
+	bw.WriteByte(pf.Encoding.Key)
+	n += 1
+
+	nn, _ = bw.WriteString(pf.MimeType)
+	n += int64(nn)
+
+	bw.WriteByte(0)
+	n += 1
+
+	bw.WriteByte(pf.PictureType)
+	n += 1
+
+	nn, err = encodeWriteText(bw, pf.Description, pf.Encoding)
+	n += int64(nn)
 	if err != nil {
 		return
 	}
-	n++
 
-	i, err = bw.WriteString(pf.MimeType)
-	if err != nil {
-		return
-	}
-	n += int64(i)
+	nn, _ = bw.Write(pf.Encoding.TerminationBytes)
+	n += int64(nn)
 
-	err = bw.WriteByte(0)
-	if err != nil {
-		return
-	}
-	n++
+	nn, _ = bw.Write(pf.Picture)
+	n += int64(nn)
 
-	err = bw.WriteByte(pf.PictureType)
-	if err != nil {
-		return
-	}
-	n++
-
-	i, err = bw.WriteString(pf.Description)
-	if err != nil {
-		return
-	}
-	n += int64(i)
-
-	i, err = bw.Write(pf.Encoding.TerminationBytes)
-	if err != nil {
-		return
-	}
-	n += int64(i)
-
-	i, err = bw.Write(pf.Picture)
-	if err != nil {
-		return
-	}
-	n += int64(i)
-
-	err = bw.Flush()
-	return
+	return n, bw.Flush()
 }
 
 func parsePictureFrame(rd io.Reader) (Framer, error) {
-	bufRd := rdpool.Get(rd)
-	defer rdpool.Put(bufRd)
+	bufRd := getUtilReader(rd)
+	defer putUtilReader(bufRd)
 
-	encodingByte, err := bufRd.ReadByte()
+	encodingKey, err := bufRd.ReadByte()
 	if err != nil {
 		return nil, err
 	}
-	encoding := Encodings[encodingByte]
+	encoding := getEncoding(encodingKey)
 
 	mimeType, err := bufRd.ReadTillDelim(0)
 	if err != nil {
@@ -112,7 +90,7 @@ func parsePictureFrame(rd io.Reader) (Framer, error) {
 		return nil, err
 	}
 
-	picture, err := util.ReadAll(bufRd)
+	picture, err := readAll(bufRd)
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +99,7 @@ func parsePictureFrame(rd io.Reader) (Framer, error) {
 		Encoding:    encoding,
 		MimeType:    string(mimeType),
 		PictureType: pictureType,
-		Description: string(description),
+		Description: decodeText(description, encoding),
 		Picture:     picture,
 	}
 

@@ -1,23 +1,12 @@
-[![GoDoc](https://godoc.org/github.com/bogem/id3v2?status.svg)](https://godoc.org/github.com/bogem/id3v2)
-[![Build Status](https://travis-ci.org/bogem/id3v2.svg?branch=master)](https://travis-ci.org/bogem/id3v2)
-[![Go Report Card](https://goreportcard.com/badge/github.com/bogem/id3v2)](https://goreportcard.com/report/github.com/bogem/id3v2)
+# id3v2 [![GoDoc](https://godoc.org/github.com/bogem/id3v2?status.svg)](https://godoc.org/github.com/bogem/id3v2) [![Build Status](https://travis-ci.org/bogem/id3v2.svg?branch=master)](https://travis-ci.org/bogem/id3v2) [![Go Report Card](https://goreportcard.com/badge/github.com/bogem/id3v2)](https://goreportcard.com/report/github.com/bogem/id3v2)
 
-# id3v2
 
-## IMHO
-I think, **ID3** is a very overwhelmed standard: it does **more than it really should do**.
-There are a lot of aspects, which developer should take into consideration.
-And that's why it's pretty complicated to write a **good library**.
-So if you have some thoughts and ideas or if you want to support me about writing a **new simple and elegant standard**
-for providing information for digital music tracks, just write me an e-mail.
-I think, it's a good time to write an appropriate standard for it 😉
-
-## Description
-**Fast and stable ID3 parsing and writing library for Go, based only on standard library and without any third-party dependency.**
+**Fast and stable ID3 parsing and writing library for Go, based only on standard library.**
 
 It can:
 * support ID3v2.3 and ID3v2.4 tags;
 * parse and write tags;
+* work with available encodings;
 * set artist, album, year, genre, unsynchronised lyrics/text (USLT),
 comments and attached pictures;
 * set several USLTs, comments and attached pictures;
@@ -29,13 +18,8 @@ It can't:
 
 **id3v2 is still in beta. Until version 1.0 the API may be changed.**
 
-If you have **issues with encoding** or you don't know, how to **set
-encoding to frame**, please write new issue!
-
-If you want some **functionality, that library can't do**,
-or you have some **questions**, just write an issue.
-
-**And of course, pull requests are welcome!**
+If you want some functionality, that library can't do,
+or you have some questions, just write an issue. **And of course, pull requests are welcome!**
 
 ## Installation
   	$ go get -u github.com/bogem/id3v2
@@ -117,6 +101,32 @@ type Options struct {
 	ParseFrames []string
 }
 ```
+
+## Work with encodings
+id3v2 can encode and decode text of avaialble encodings (ISO-8859-1,
+UTF-16 with BOM, UTF-16BE without BOM, UTF-8). All strings of frames are
+always encoded with UTF-8.
+
+For example, if you set comment frame with custom encoding and write it:
+```go
+tag := id3v2.NewEmptyTag()
+comment := id3v2.CommentFrame{
+	Encoding:    id3v2.EncodingUTF16,
+	Language:    "ger",
+	Description: "Tier",
+	Text:        "Der Löwe", // must be UTF-8 encoded
+}
+tag.AddCommentFrame(comment)
+
+_, err := tag.WriteTo(w)
+if err != nil {
+	log.Fatal(err)
+}
+```
+it will be automatically encoded with UTF-16BE with BOM and written to w.
+
+By default, if version of tag is 4 then UTF-8 is used for methods like
+`SetArtist`, `SetTitle`, `SetGenre` and etc, otherwise ISO-8859-1.
 
 ## Documentation
 

@@ -4,14 +4,7 @@
 
 package id3v2
 
-import (
-	"errors"
-	"io"
-
-	"github.com/bogem/id3v2/bwpool"
-	"github.com/bogem/id3v2/rdpool"
-	"github.com/bogem/id3v2/util"
-)
+import "io"
 
 // CommentFrame is used to work with COMM frames.
 // The information about how to add comment frame to tag you can
@@ -20,68 +13,62 @@ import (
 // You must choose a three-letter language code from
 // ISO 639-2 code list: https://www.loc.gov/standards/iso639-2/php/code_list.php
 type CommentFrame struct {
-	Encoding    util.Encoding
+	Encoding    Encoding
 	Language    string
 	Description string
 	Text        string
 }
 
 func (cf CommentFrame) Size() int {
-	return 1 + len(cf.Language) + len(cf.Description) +
-		+len(cf.Encoding.TerminationBytes) + len(cf.Text)
+	return 1 + len(cf.Language) + encodedSize(cf.Description, cf.Encoding) +
+		+len(cf.Encoding.TerminationBytes) + encodedSize(cf.Text, cf.Encoding)
 }
 
 func (cf CommentFrame) WriteTo(w io.Writer) (n int64, err error) {
-	var i int
-	bw := bwpool.Get(w)
-	defer bwpool.Put(bw)
-
-	err = bw.WriteByte(cf.Encoding.Key)
-	if err != nil {
-		return
-	}
-	n++
-
 	if len(cf.Language) != 3 {
-		return n, errors.New("language code must consist of three letters according to ISO 639-2")
+		return n, ErrInvalidLanguageLength
 	}
-	i, err = bw.WriteString(cf.Language)
+
+	bw, ok := resolveBufioWriter(w)
+	if !ok {
+		defer putBufioWriter(bw)
+	}
+
+	var nn int
+
+	bw.WriteByte(cf.Encoding.Key)
+	n += 1
+
+	nn, _ = bw.WriteString(cf.Language)
+	n += int64(nn)
+
+	nn, err = encodeWriteText(bw, cf.Description, cf.Encoding)
+	n += int64(nn)
 	if err != nil {
 		return
 	}
-	n += int64(i)
 
-	i, err = bw.WriteString(cf.Description)
+	nn, _ = bw.Write(cf.Encoding.TerminationBytes)
+	n += int64(nn)
+
+	nn, err = encodeWriteText(bw, cf.Text, cf.Encoding)
+	n += int64(nn)
 	if err != nil {
 		return
 	}
-	n += int64(i)
 
-	i, err = bw.Write(cf.Encoding.TerminationBytes)
-	if err != nil {
-		return
-	}
-	n += int64(i)
-
-	i, err = bw.WriteString(cf.Text)
-	if err != nil {
-		return
-	}
-	n += int64(i)
-
-	err = bw.Flush()
-	return
+	return n, bw.Flush()
 }
 
 func parseCommentFrame(rd io.Reader) (Framer, error) {
-	bufRd := rdpool.Get(rd)
-	defer rdpool.Put(bufRd)
+	bufRd := getUtilReader(rd)
+	defer putUtilReader(bufRd)
 
-	encodingByte, err := bufRd.ReadByte()
+	encodingKey, err := bufRd.ReadByte()
 	if err != nil {
 		return nil, err
 	}
-	encoding := Encodings[encodingByte]
+	encoding := getEncoding(encodingKey)
 
 	language, err := bufRd.Next(3)
 	if err != nil {
@@ -96,16 +83,18 @@ func parseCommentFrame(rd io.Reader) (Framer, error) {
 		return nil, err
 	}
 
-	text, err := bufRd.String()
-	if err != nil {
+	text := getBytesBuffer()
+	defer putBytesBuffer(text)
+
+	if _, err := text.ReadFrom(bufRd); err != nil {
 		return nil, err
 	}
 
 	cf := CommentFrame{
 		Encoding:    encoding,
 		Language:    string(language),
-		Description: string(description),
-		Text:        text,
+		Description: decodeText(description, encoding),
+		Text:        decodeText(text.Bytes(), encoding),
 	}
 
 	return cf, nil

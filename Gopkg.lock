@@ -2,10 +2,10 @@
 
 
 [[projects]]
-  branch = "master"
   name = "github.com/PuerkitoBio/goquery"
   packages = ["."]
-  revision = "8806ada2a4ab225c06e9106f9631be80932db7ce"
+  revision = "09540e565986583836b5fc792fe951ec5fd201dd"
+  version = "v1.3.0"
 
 [[projects]]
   branch = "master"
@@ -14,22 +14,22 @@
   revision = "349dd0209470eabd9514242c688c403c0926d266"
 
 [[projects]]
-  branch = "master"
   name = "github.com/bogem/id3v2"
-  packages = [".","bspool","bwpool","lrpool","rdpool","util"]
-  revision = "1e106de4ea1789a593dfc207470e844f7b911e0a"
+  packages = ["."]
+  revision = "2a41e8833176c6a193e1d2dc1f7cc398aab011c8"
+  version = "v0.12.1"
 
 [[projects]]
-  branch = "master"
   name = "github.com/mattn/go-runewidth"
   packages = ["."]
-  revision = "97311d9f7767e3d6f422ea06661bc2c7a19e8a5d"
+  revision = "9e777a8366cce605130a531d2cd6363d07ad7317"
+  version = "v0.0.2"
 
 [[projects]]
-  branch = "master"
   name = "github.com/mmcdole/gofeed"
   packages = [".","atom","extensions","internal/shared","rss"]
-  revision = "042c0a9121581210fc8ef106d8ad1b0bdf931ae2"
+  revision = "42010a154d249f5f753dfe03a6390b59671e403e"
+  version = "v1.0.0-beta2"
 
 [[projects]]
   branch = "master"
@@ -41,23 +41,29 @@
   branch = "master"
   name = "golang.org/x/net"
   packages = ["html","html/atom","html/charset"]
-  revision = "f5079bd7f6f74e23c4d65efa0f4ce14cbd6a3c0f"
+  revision = "2fb46b16b8dda405028c50f7c7f0f9dd1fa6bfb1"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/sys"
+  packages = ["unix"]
+  revision = "37707fdb30a5b38865cfb95e5aab41707daec7fd"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/text"
   packages = ["encoding","encoding/charmap","encoding/htmlindex","encoding/internal","encoding/internal/identifier","encoding/japanese","encoding/korean","encoding/simplifiedchinese","encoding/traditionalchinese","encoding/unicode","internal/gen","internal/tag","internal/utf8internal","language","runes","transform","unicode/cldr"]
-  revision = "836efe42bb4aa16aaa17b9c155d8813d336ed720"
+  revision = "e19ae1496984b1c655b8044a65c0300a3c878dd3"
 
 [[projects]]
-  branch = "master"
   name = "gopkg.in/cheggaaa/pb.v1"
   packages = ["."]
-  revision = "f6ccf2184de4dd34495277e38dc19b6e7fbe0ea2"
+  revision = "5119518d88fbf604cab04dafd667dc7022e3b5ac"
+  version = "v1.0.21"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "938afbf305384cdfd75ba18f7766bb804c48075178c7c9393a532655d277c275"
+  inputs-digest = "328a931b10ccade006d06a2c95b5b25737adea35ee5837bf7b2d4df1536dd883"
   solver-name = "gps-cdcl"
   solver-version = 1
